@@ -75,7 +75,7 @@ com.example.library
 │   ├── service
 │   │   └── Library.java
 ├── exception (optional)
-└── util (optional)
+└── l origin develop (optional)
 
 Ensure strict separation between:
 
