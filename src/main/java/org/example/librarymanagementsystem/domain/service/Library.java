@@ -48,8 +48,8 @@ public class Library {
         User foundedUser = findUser(userId);
         Book foundedBook = findBook(bookId);
 
-        if(foundedBook.isAvailable()){
-            throw new IllegalStateException("Book was not borrowed by the User");
+        if (!foundedUser.getBorrowedBooks().contains(foundedBook)) {
+            throw new IllegalStateException("User did not borrow this book");
         }
 
         foundedBook.setAvailable(true);
