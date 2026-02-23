@@ -2,10 +2,12 @@ package org.example.librarymanagementsystem.domain.service;
 
 import org.example.librarymanagementsystem.domain.model.Book;
 import org.example.librarymanagementsystem.domain.model.User;
+import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
 
+@Service
 public class Library {
 
     private List<Book> books;
