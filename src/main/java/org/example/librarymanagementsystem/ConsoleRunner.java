@@ -1,6 +1,10 @@
 package org.example.librarymanagementsystem;
 
 import org.example.librarymanagementsystem.domain.service.Library;
+import org.example.librarymanagementsystem.exception.BookAlreadyBorrowedException;
+import org.example.librarymanagementsystem.exception.BookNotFoundException;
+import org.example.librarymanagementsystem.exception.InvalidOperationException;
+import org.example.librarymanagementsystem.exception.UserNotFoundException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -26,23 +30,39 @@ public class ConsoleRunner implements CommandLineRunner {
             String choice = scanner.nextLine();
 
             try {
-                switch (choice) {
-                    case "1" -> addBook();
-                    case "2" -> registerUser();
-                    case "3" -> borrowBook();
-                    case "4" -> returnBook();
-                    case "5" -> showBooks();
-                    case "6" -> showUsers();
-                    case "0" -> running = false;
-                    default -> System.out.println("Invalid option.");
-                }
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                running = handleChoice(choice);
+            } catch (BookNotFoundException |
+                     UserNotFoundException |
+                     BookAlreadyBorrowedException |
+                     InvalidOperationException e) {
+
+                System.out.println("Operation failed: " + e.getMessage());
+
+            } catch (IllegalArgumentException e) {
+
+                System.out.println("Invalid input: " + e.getMessage());
             }
 
             System.out.println();
         }
     }
+
+    private boolean handleChoice(String choice) {
+        return switch (choice) {
+            case "1" -> { addBook(); yield true; }
+            case "2" -> { registerUser(); yield true; }
+            case "3" -> { borrowBook(); yield true; }
+            case "4" -> { returnBook(); yield true; }
+            case "5" -> { showBooks(); yield true; }
+            case "6" -> { showUsers(); yield true; }
+            case "0" -> false;
+            default -> {
+                System.out.println("Invalid option.");
+                yield true;
+            }
+        };
+    }
+
 
     private void printMenu() {
         System.out.println("===== LIBRARY MENU =====");
@@ -57,21 +77,18 @@ public class ConsoleRunner implements CommandLineRunner {
     }
 
     private void addBook() {
-        System.out.print("Title: ");
-        String title = scanner.nextLine();
-        System.out.print("Author: ");
-        String author = scanner.nextLine();
+        String title = readText("Title: ");
+        String author = readText("Author: ");
 
         library.addBook(title, author);
-        System.out.println("Book added.");
+        System.out.println("Book added successfully.");
     }
 
     private void registerUser() {
-        System.out.print("Name: ");
-        String name = scanner.nextLine();
+        String name = readText("Name: ");
 
         library.registerUser(name);
-        System.out.println("User registered.");
+        System.out.println("User registered successfully.");
     }
 
     private void borrowBook() {
@@ -79,7 +96,7 @@ public class ConsoleRunner implements CommandLineRunner {
         Long bookId = readLong("Book ID: ");
 
         library.borrowBook(userId, bookId);
-        System.out.println("Book borrowed.");
+        System.out.println("Book borrowed successfully.");
     }
 
     private void returnBook() {
@@ -87,7 +104,7 @@ public class ConsoleRunner implements CommandLineRunner {
         Long bookId = readLong("Book ID: ");
 
         library.returnBook(userId, bookId);
-        System.out.println("Book returned.");
+        System.out.println("Book returned successfully.");
     }
 
     private void showBooks() {
@@ -105,5 +122,16 @@ public class ConsoleRunner implements CommandLineRunner {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("ID must be numeric.");
         }
+    }
+
+    private String readText(String message) {
+        System.out.print(message);
+        String input = scanner.nextLine();
+
+        if (input == null || input.isBlank()) {
+            throw new IllegalArgumentException("Field cannot be empty.");
+        }
+
+        return input;
     }
 }
