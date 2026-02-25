@@ -1,4 +1,4 @@
-package org.example.librarymanagementsystem;
+package org.example.librarymanagementsystem.app;
 
 import org.example.librarymanagementsystem.domain.service.Library;
 import org.example.librarymanagementsystem.exception.BookAlreadyBorrowedException;
