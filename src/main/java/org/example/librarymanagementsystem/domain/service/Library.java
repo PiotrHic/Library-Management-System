@@ -2,6 +2,9 @@ package org.example.librarymanagementsystem.domain.service;
 
 import org.example.librarymanagementsystem.domain.model.Book;
 import org.example.librarymanagementsystem.domain.model.User;
+import org.example.librarymanagementsystem.exception.BookAlreadyBorrowedException;
+import org.example.librarymanagementsystem.exception.BookNotFoundException;
+import org.example.librarymanagementsystem.exception.UserNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -38,7 +41,7 @@ public class Library {
         Book foundedBook = findBook(bookId);
 
         if(!foundedBook.isAvailable()){
-            throw new IllegalStateException("Book is not available");
+            throw new BookAlreadyBorrowedException(foundedBook.getId());
         }
 
         foundedBook.setAvailable(false);
@@ -51,7 +54,7 @@ public class Library {
         Book foundedBook = findBook(bookId);
 
         if (!foundedUser.getBorrowedBooks().contains(foundedBook)) {
-            throw new IllegalStateException("User did not borrow this book");
+            throw new BookNotFoundException(foundedBook.getId());
         }
 
         foundedBook.setAvailable(true);
@@ -71,16 +74,14 @@ public class Library {
         return books.stream()
                 .filter(b -> b.getId().equals(bookId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        String.format("Book with id %d was not found", bookId)));
+                .orElseThrow(() -> new BookNotFoundException(bookId));
     }
 
     private User findUser(Long userId){
         return users.stream()
                 .filter(u -> u.getId().equals(userId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        String.format("User with id %d was not found", userId)));
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
     }
 
