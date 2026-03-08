@@ -6,10 +6,9 @@ import org.example.librarymanagementsystem.exception.BookAlreadyBorrowedExceptio
 import org.example.librarymanagementsystem.exception.BookNotFoundException;
 import org.example.librarymanagementsystem.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,153 +22,166 @@ class LibraryTest {
         library = new Library();
     }
 
-    @Test
-    void validBookShouldBeAdded(){
+    @Nested
+    class BookRegistrationTests {
 
-        Book book = library.addBook("title","author");
+        @Test
+        void validBookShouldBeAdded(){
 
-        assertEquals("title", book.getTitle());
-        assertEquals("author", book.getAuthor());
-        assertTrue(book.isAvailable());
-        assertEquals(1, library.getAllBooks().size());
+            Book book = library.addBook("title","author");
+
+            assertEquals("title", book.getTitle());
+            assertEquals("author", book.getAuthor());
+            assertTrue(book.isAvailable());
+            assertEquals(1, library.getAllBooks().size());
+        }
+
+        @Test
+        void shouldRejectBookWithEmptyTitle() {
+            assertThrows(IllegalArgumentException.class, () ->
+                    library.addBook("", "Author")
+            );
+        }
+
+        @Test
+        void shouldGenerateUniqueIdsForBooks() {
+            Book b1 = library.addBook("Book1", "Author1");
+            Book b2 = library.addBook("Book2", "Author2");
+
+            assertNotEquals(b1.getId(), b2.getId());
+        }
     }
 
-    @Test
-    void shouldRejectBookWithEmptyTitle() {
-        assertThrows(IllegalArgumentException.class, () ->
-                library.addBook("", "Author")
-        );
-    }
+    @Nested
+    class UserRegistrationTests {
 
-    @Test
-    void shouldGenerateUniqueIdsForBooks() {
-        Book b1 = library.addBook("Book1", "Author1");
-        Book b2 = library.addBook("Book2", "Author2");
+        @Test
+        void validUserShouldBeAdded(){
+            User addedUser = library.registerUser("Piotr Hic");
 
-        assertNotEquals(b1.getId(), b2.getId());
-    }
+            assertEquals("Piotr Hic", addedUser.getName());
+            assertEquals(1, library.getAllUsers().size());
+        }
 
-    @Test
-    void validUserShouldBeAdded(){
-        User addedUser = library.registerUser("Piotr Hic");
-
-        assertEquals("Piotr Hic", addedUser.getName());
-        assertEquals(1, library.getAllUsers().size());
-    }
-
-    @Test
-    void shouldRejectUserWithEmptyName() {
-        assertThrows(IllegalArgumentException.class, () ->
-                library.registerUser("")
-        );
-    }
-
-    @Test
-    void bookWasSuccessfullyBorrowed() {
-
-        Book book = library.addBook("title","author");
-        User addedUser = library.registerUser("Piotr Hic");
-
-        library.borrowBook(addedUser.getId(),book.getId());
-
-        assertNotNull(book);
-        assertNotNull(addedUser);
-        assertFalse(book.isAvailable());
-        assertTrue(addedUser.getBorrowedBooks().contains(book));
-    }
-
-    @Test
-    void tryToBookAlreadyBorrowedBook() {
-
-        Book book = library.addBook("title","author");
-        User addedUser = library.registerUser("Piotr Hic");
-
-        library.borrowBook(addedUser.getId(),book.getId());
-
-        assertThrows(BookAlreadyBorrowedException.class, () ->
-                library.borrowBook(addedUser.getId(),book.getId())
-        );
+        @Test
+        void shouldRejectUserWithEmptyName() {
+            assertThrows(IllegalArgumentException.class, () ->
+                    library.registerUser("")
+            );
+        }
 
     }
 
-    @Test
-    void borrowNoExistingBook() {
+    @Nested
+    class BorrowingTests {
 
-        User addedUser = library.registerUser("Piotr Hic");
+        @Test
+        void bookWasSuccessfullyBorrowed() {
 
-        assertThrows(BookNotFoundException.class, () ->
-                library.borrowBook(addedUser.getId(),null)
-        );
+            Book book = library.addBook("title","author");
+            User addedUser = library.registerUser("Piotr Hic");
 
+            assertTrue(bookAvailabilityCheck(book));
+
+            library.borrowBook(addedUser.getId(),book.getId());
+
+            isBookBorrowedByMultipleUsers(book);
+
+            assertFalse(book.isAvailable());
+            assertFalse(bookAvailabilityCheck(book));
+
+            assertFalse(book.isAvailable());
+            assertTrue(addedUser.getBorrowedBooks().contains(book));
+        }
+
+        @Test
+        void tryToBookAlreadyBorrowedBook() {
+
+            Book book = library.addBook("title","author");
+            User addedUser = library.registerUser("Piotr Hic");
+
+            library.borrowBook(addedUser.getId(),book.getId());
+            isBookBorrowedByMultipleUsers(book);
+            assertFalse(book.isAvailable());
+
+            assertThrows(BookAlreadyBorrowedException.class, () ->
+                    library.borrowBook(addedUser.getId(),book.getId())
+            );
+
+        }
+
+        @Test
+        void borrowNoExistingBook() {
+
+            User addedUser = library.registerUser("Piotr Hic");
+
+            assertThrows(BookNotFoundException.class, () ->
+                    library.borrowBook(addedUser.getId(),null)
+            );
+
+        }
     }
 
-    @Test
-    void noExistingUser() {
 
-        Book book = library.addBook("title","author");
-        User addedUser = library.registerUser("Piotr Hic");
+    @Nested
+    class ReturningTests {
 
-        assertThrows(UserNotFoundException.class, () ->
-                library.borrowBook(null,book.getId())
-        );
-    }
+        @Test
+        void noExistingUser() {
 
-    /*
+            Book book = library.addBook("title","author");
 
-    Returning
+            assertThrows(UserNotFoundException.class, () ->
+                    library.borrowBook(null,book.getId())
+            );
+        }
 
-    Success scenario
+        @Test
+        void bookWasSuccessfullyReturned() {
 
-    Return book not borrowed
+            Book book = library.addBook("title","author");
+            User addedUser = library.registerUser("Piotr Hic");
 
-    Return non-existing book
+            library.borrowBook(addedUser.getId(),book.getId());
+            assertFalse(book.isAvailable());
+            isBookBorrowedByMultipleUsers(book);
+            library.returnBook(addedUser.getId(),book.getId());
 
-    Return non-existing user
-    */
+            assertNotNull(book);
+            assertNotNull(addedUser);
+            assertTrue(book.isAvailable());
+            assertFalse(addedUser.getBorrowedBooks().contains(book));
+        }
 
-    @Test
-    void bookWasSuccessfullyReturned() {
+        @Test
+        void returnBookNotBorrowed() {
 
-        Book book = library.addBook("title","author");
-        User addedUser = library.registerUser("Piotr Hic");
+            Book book = library.addBook("title","author");
+            User addedUser = library.registerUser("Piotr Hic");
 
-        library.borrowBook(addedUser.getId(),book.getId());
-        library.returnBook(addedUser.getId(),book.getId());
+            assertThrows(BookNotFoundException.class, () ->
+                    library.returnBook(addedUser.getId(),book.getId())
+            );
 
-        assertNotNull(book);
-        assertNotNull(addedUser);
-        assertTrue(book.isAvailable());
-        assertFalse(addedUser.getBorrowedBooks().contains(book));
-    }
+        }
 
-    @Test
-    void returnBookNotBorrowed() {
+        @Test
+        void returnNotExistingBook(){
+            User addedUser = library.registerUser("Piotr Hic");
 
-        Book book = library.addBook("title","author");
-        User addedUser = library.registerUser("Piotr Hic");
+            assertThrows(BookNotFoundException.class, () ->
+                    library.returnBook(addedUser.getId(),null)
+            );
+        }
 
-        assertThrows(BookNotFoundException.class, () ->
-                library.returnBook(addedUser.getId(),book.getId())
-        );
+        @Test
+        void returnNotExistingUser(){
+            Book book = library.addBook("title","author");
 
-    }
-
-    @Test
-    void returnNotExistingBook(){
-        User addedUser = library.registerUser("Piotr Hic");
-
-        assertThrows(BookNotFoundException.class, () ->
-                library.returnBook(addedUser.getId(),null)
-        );
-    }
-
-    @Test
-    void returnNotExistingUser(){
-        Book book = library.addBook("title","author");
-
-        assertThrows(UserNotFoundException.class, () ->
-                library.returnBook(null,book.getId())
-        );
+            assertThrows(UserNotFoundException.class, () ->
+                    library.returnBook(null,book.getId())
+            );
+        }
     }
 
     @Test
@@ -191,11 +203,31 @@ class LibraryTest {
         Book book = library.addBook("Clean Code", "Martin");
 
         library.borrowBook(user.getId(), book.getId());
-
+        isBookBorrowedByMultipleUsers(book);
+        assertTrue(library.getAllBooks().contains(book));
         assertFalse(book.isAvailable());
 
         library.returnBook(user.getId(), book.getId());
 
         assertTrue(book.isAvailable());
     }
+
+    private boolean bookAvailabilityCheck(Book book) {
+        for(User user : library.getAllUsers()){
+            if(user.getBorrowedBooks().contains(book)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void isBookBorrowedByMultipleUsers(Book book) {
+        long count = library.getAllUsers().stream()
+                .filter(user -> user.getBorrowedBooks().contains(book))
+                .count();
+        if (count > 1) {
+            throw new IllegalStateException("Book cannot belong to two users simultaneously");
+        }
+    }
+
 }
