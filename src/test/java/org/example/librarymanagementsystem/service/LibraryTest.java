@@ -1,7 +1,8 @@
-package org.example.librarymanagementsystem.domain.service;
+package org.example.librarymanagementsystem.service;
 
 import org.example.librarymanagementsystem.domain.model.Book;
 import org.example.librarymanagementsystem.domain.model.User;
+import org.example.librarymanagementsystem.domain.service.Library;
 import org.example.librarymanagementsystem.exception.BookAlreadyBorrowedException;
 import org.example.librarymanagementsystem.exception.BookNotFoundException;
 import org.example.librarymanagementsystem.exception.UserNotFoundException;
