@@ -4,15 +4,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Getter
 @EqualsAndHashCode(of = "id")
 @ToString
 public class User {
 
-    public User (Long id, String name, List<Book> borrowedBooks) {
+    public User (Long id, String name, Set<Book> borrowedBooks) {
         this.id = id;
         this.name = name;
         this.borrowedBooks = borrowedBooks;
@@ -20,7 +19,7 @@ public class User {
 
     private final Long id;
     private String name;
-    private List<Book> borrowedBooks;
+    private Set<Book> borrowedBooks = new HashSet<>();
 
 
     public User(Long id, String name) {
@@ -42,8 +41,8 @@ public class User {
         this.name = name;
     }
 
-    public List<Book> getBorrowedBooks() {
-        return Collections.unmodifiableList(borrowedBooks);
+    public Set<Book> getBorrowedBooks() {
+        return Collections.unmodifiableSet(borrowedBooks);
     }
 
     public void borrowBook(Book book) {

@@ -7,14 +7,15 @@ import org.example.librarymanagementsystem.exception.BookNotFoundException;
 import org.example.librarymanagementsystem.exception.UserNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Service
 public class Library {
 
-    private List<Book> books;
-    private List<User> users;
+    private List<Book> books = new ArrayList<>();
+    private List<User> users = new ArrayList<>();
 
     private long nextBookId = 1L;
     private long nextUserId = 1L;
@@ -37,28 +38,28 @@ public class Library {
     }
 
     public void borrowBook(Long userId, Long bookId){
-        User foundedUser = findUser(userId);
-        Book foundedBook = findBook(bookId);
+        User foundUser = findUser(userId);
+        Book foundBook = findBook(bookId);
 
-        if(!foundedBook.isAvailable()){
-            throw new BookAlreadyBorrowedException(foundedBook.getId());
+        if(!foundBook.isAvailable()){
+            throw new BookAlreadyBorrowedException(foundBook.getId());
         }
 
-        foundedBook.setAvailable(false);
-        foundedUser.borrowBook(foundedBook);
+        foundBook.setAvailable(false);
+        foundUser.borrowBook(foundBook);
 
     }
 
     public void returnBook(Long userId, Long bookId){
-        User foundedUser = findUser(userId);
-        Book foundedBook = findBook(bookId);
+        User foundUser = findUser(userId);
+        Book foundBook = findBook(bookId);
 
-        if (!foundedUser.getBorrowedBooks().contains(foundedBook)) {
-            throw new BookNotFoundException(foundedBook.getId());
+        if (!foundUser.getBorrowedBooks().contains(foundBook)) {
+            throw new BookNotFoundException(foundBook.getId());
         }
 
-        foundedBook.setAvailable(true);
-        foundedUser.returnBook(foundedBook);
+        foundBook.setAvailable(true);
+        foundUser.returnBook(foundBook);
 
     }
 
