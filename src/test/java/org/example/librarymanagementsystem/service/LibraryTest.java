@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class LibraryTest {
@@ -181,6 +183,45 @@ class LibraryTest {
             assertThrows(UserNotFoundException.class, () ->
                     library.returnBook(null,book.getId())
             );
+        }
+
+        @Test
+        void shouldNotAllowReturningBookTwice() {
+            Book book = library.addBook("title", "author");
+            User user = library.registerUser("Alice");
+            library.borrowBook(user.getId(), book.getId());
+
+            library.returnBook(user.getId(), book.getId());
+            assertThrows(BookNotFoundException.class, () ->
+                    library.returnBook(user.getId(), book.getId())
+            );
+        }
+
+        @Test
+        void shouldHandleLargeNumberOfBooks() {
+            int totalBooks = 1000;
+            User stressUser = library.registerUser("StressTester");
+
+            for (int i = 1; i <= totalBooks; i++) {
+                library.addBook("Book " + i, "Author " + i);
+            }
+
+            assertEquals(totalBooks, library.getAllBooks().size());
+
+            List<Book> books = library.getAllBooks();
+
+            for (int i = 0; i < totalBooks / 2; i++) {
+                library.borrowBook(stressUser.getId(), books.get(i).getId());
+            }
+
+            long availableCount = library.getAllBooks().size();
+            assertEquals(totalBooks / 2, availableCount - totalBooks / 2);
+
+            for (int i = 0; i < totalBooks / 2; i++) {
+                library.returnBook(stressUser.getId(), books.get(i).getId());
+            }
+
+            assertEquals(totalBooks, library.getAllBooks().size());
         }
     }
 
